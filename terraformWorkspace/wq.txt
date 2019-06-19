@@ -1,0 +1,8 @@
+elif [[ -f $instance_name ]];
+  then
+   echo Service Instance name already exists..please choose other name..!
+   #echo $instance_name
+   elif [[ -f $service_key ]];
+   then 
+		echo Service key name already exists..please choose other name..!
+		ibmcloud resource service-key $3 --output=json | jq .[0].credentials.connection.grpc.hosts

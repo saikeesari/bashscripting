@@ -1,0 +1,61 @@
+{
+  "kind": "PersistentVolume",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "pvc-56845657-7c02-11e9-9fd0-16cf29b0940b",
+    "selfLink": "/api/v1/persistentvolumes/pvc-56845657-7c02-11e9-9fd0-16cf29b0940b",
+    "uid": "95f669b2-7c02-11e9-a6c4-168a14d8154a",
+    "resourceVersion": "114671263",
+    "creationTimestamp": "2019-05-21T19:56:55Z",
+    "labels": {
+      "CapacityGb": "20",
+      "Datacenter": "dal13",
+      "IOPS": "10",
+      "StorageType": "Endurance",
+      "billingType": "hourly",
+      "failure-domain.beta.kubernetes.io/region": "us-south",
+      "failure-domain.beta.kubernetes.io/zone": "dal13",
+      "ibm-cloud.kubernetes.io/iaas-provider": "softlayer"
+    },
+    "annotations": {
+      "ibm.io/network-storage-id": "76587929",
+      "pv.kubernetes.io/provisioned-by": "ibm.io/ibmc-block",
+      "volume.beta.kubernetes.io/storage-class": ""
+    },
+    "finalizers": [
+      "kubernetes.io/pv-protection"
+    ]
+  },
+  "spec": {
+    "capacity": {
+      "storage": "20Gi"
+    },
+    "flexVolume": {
+      "driver": "ibm/ibmc-block",
+      "fsType": "ext4",
+      "options": {
+        "Lun": "20",
+        "TargetPortal": "161.26.114.104",
+        "VolumeID": "76587929",
+        "volumeName": "pvc-56845657-7c02-11e9-9fd0-16cf29b0940b"
+      }
+    },
+    "accessModes": [
+      "ReadWriteOnce"
+    ],
+    "claimRef": {
+      "kind": "PersistentVolumeClaim",
+      "namespace": "craig",
+      "name": "backupdir-c-cassandra-dc1-1",
+      "uid": "56845657-7c02-11e9-9fd0-16cf29b0940b",
+      "apiVersion": "v1",
+      "resourceVersion": "114670453"
+    },
+    "persistentVolumeReclaimPolicy": "Delete",
+    "storageClassName": "ibmc-block-gold",
+    "volumeMode": "Filesystem"
+  },
+  "status": {
+    "phase": "Bound"
+  }
+}

@@ -1,0 +1,72 @@
+#!/bin/bash
+#this function will execute the helpful information
+function myHelp () {
+cat <<-END
+     Make sure to have IBM Cloud CLI and Jq installed and logged into the correct IBM Account.
+     Execute the script in the following format:
+     etcdInstance.sh <<instance_name>> <<instance_region>> <<servicekey_name>>
+     Ex: etcdInstance.sh etcd-backend us-south backend-key
+END
+}
+
+if [ "$#" -eq 0 ]; then
+    myHelp
+    exit
+fi
+
+if [ "$1" == "--help" ]; then
+    myHelp
+    exit
+fi
+check_instance_name=`(ibmcloud resource service-instances | grep -w $1 | wc -l)`
+check_service_key=`(ibmcloud resource service-keys | grep -w $3 | wc -l)`
+function createInstance (){
+  ibmcloud resource service-key-create $3 Administrator --instance-name $1	 
+  ibmcloud resource service-key $3 --output=json | jq .[0].credentials.connection.grpc.hosts
+  echo "copy and paste the hostname and the port no in the endpoints in backend.tf file"	
+  echo "endpoint should contain (https://)"
+  #Get Username and password
+  uname=($(ibmcloud resource service-key $3 --output=json | jq .[0].credentials.connection.grpc.authentication | jq -r '.username'))
+  passwd=($(ibmcloud resource service-key $3 --output=json | jq .[0].credentials.connection.grpc.authentication | jq -r '.password'))
+  # export the username and passwords as a Environment Variables.
+  export ETCDV3_USERNAME=$uname
+  export ETCDV3_PASSWORD=$passwd
+  #Get CA certificate for SSl connection Validation
+  ibmcloud resource service-key $3 --output=json | jq --raw-output .[0].credentials.connection.grpc.certificate.certificate_base64 | base64 -D >> CA_Cert.pem
+  echo "Import the encoded CA_cert.pem to System CA store (e.g. System Keychain on MacOS or default trusted CA store in Linux). This step is required, otherwise Terraform will not be able to validate self-signed certificate provided by ETCD service."
+}
+function createServicekey (){
+  ibmcloud resource service-instance-create $1 databases-for-etcd standard $2	
+   while :
+   	do 
+    state=$(ibmcloud resource service-instance $1 --output JSON | jq .[0].state)
+    echo "Current state is: $state"
+    sleep 10
+        if [ $state == "\"active\"" ] 
+        then
+            echo "Service instance is provisioned. Current state is: $state"
+            break
+        fi
+	done
+}
+#Make sure to have IBM Cloud CLI and Jq installed and logged into the correct IBM Account.
+#In order to move to etcdv3 request a ETCD instance using IBM CLOUD CLI with command:
+
+if [ $check_instance_name -gt 0 ] && [ $check_service_key -gt 0 ] ; then
+  #statements
+  echo INSTANCE_NAME and SERVICE_KEY already exists, choose other names.
+  
+elif [ $check_instance_name -gt 0 ] && [ $check_service_key -lt 1 ] ; then
+  echo creating service key with name $3 for the existing instance $1.
+  createInstance
+  
+elif [ $check_instance_name -lt 1 ] && [ $check_service_key -gt 0 ] ; then
+  echo FAILURE 
+  
+else
+  echo create new instance-name $1 with service-key $3
+  createInstance "$1" "$2" "$3"
+  createServicekey "$1" "$2" "$3"
+  #echo creating service key with name $3 for the existing instance $1.
+  
+fi
